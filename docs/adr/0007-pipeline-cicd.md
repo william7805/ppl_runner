@@ -28,6 +28,7 @@ déploie automatiquement sur Vercel, uniquement si toutes les étapes
 réussissent et uniquement depuis la branche `main`.
 
 Étapes de la pipeline :
+
 1. Installation des dépendances (`npm ci`)
 2. Lint
 3. Typecheck (`tsc --noEmit`)
@@ -42,15 +43,18 @@ bloque le déploiement.
 ## Justification
 
 ### Déploiement automatique Vercel seul
+
 - (+) Aucune configuration
 - (-) Aucun garde-fou : du code cassé peut partir en production
 - (-) Pas d'apprentissage DevOps
 
 ### Continuous delivery
+
 - (+) Contrôle humain avant chaque mise en prod
 - (-) Étape manuelle inutile pour un projet personnel à un seul développeur
 
 ### Continuous deployment
+
 - (+) Mise en production rapide et sans action manuelle
 - (+) Les tests deviennent le garde-fou de la production
 - (+) Correspond à l'objectif d'apprentissage DevOps du projet

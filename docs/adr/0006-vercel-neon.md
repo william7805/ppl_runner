@@ -11,6 +11,7 @@ accédée via Drizzle. Il faut un hébergement pour mettre le site en ligne
 avec une démarche DevOps (CI/CD en continuous deployment).
 
 Contraintes :
+
 - Budget nul : uniquement des offres gratuites
 - Usage personnel, non commercial, un seul utilisateur
 - Les données (séances importées depuis des fichiers .fit) doivent être
@@ -31,6 +32,7 @@ PostgreSQL sur Neon (plan Free).
 ## Justification
 
 ### Vercel + Neon
+
 - (+) Vercel est conçu par l'éditeur de Next.js : support natif, aucune
   configuration serveur
 - (+) Plan Hobby gratuit sans limite de durée, adapté à un usage personnel
@@ -46,6 +48,7 @@ PostgreSQL sur Neon (plan Free).
 - (-) La base Neon Free se met en veille : léger délai au premier accès
 
 ### Render
+
 - (+) App et base sur une seule plateforme
 - (-) La base Postgres gratuite expire au bout de 30 jours puis est
   supprimée : incompatible avec la conservation des données
@@ -53,6 +56,7 @@ PostgreSQL sur Neon (plan Free).
   avec environ 1 min de redémarrage
 
 ### VM gratuite avec Docker
+
 - (+) Contrôle total, apprentissage plus poussé (Docker, reverse proxy,
   HTTPS, IaC)
 - (-) Maintenance, sécurité et sauvegardes entièrement à ma charge
