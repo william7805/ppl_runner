@@ -1,0 +1,80 @@
+# ADR-0009 : Authentification avec Better Auth
+
+- Statut : Proposé
+- Date : 2026-11-04
+- Décideur : William Determann
+
+## Contexte
+
+PPL_RUNNER est déployé publiquement sur Vercel. Il contiendra des données
+personnelles sensibles : traces GPS (lieux de domicile et de travail
+déductibles), fréquence cardiaque, historique d'entraînement.
+
+Contraintes :
+- Un seul utilisateur (moi), aucune inscription publique
+- Données stockées dans ma base PostgreSQL (Neon), pas chez un tiers
+- Solution gratuite et compatible Next.js 16, Drizzle et PostgreSQL
+- Objectif d'apprentissage : comprendre ce qui est mis en place
+- Niveau de sécurité élevé : second facteur souhaité
+
+## Options envisagées
+
+1. Better Auth (bibliothèque, auto-hébergée dans ma base)
+2. Auth.js / NextAuth v5
+3. Clerk (service managé)
+4. Implémentation maison (mot de passe haché + cookie de session)
+
+## Décision
+
+Option 1 : Better Auth, avec :
+- connexion par email et mot de passe
+- inscription désactivée une fois mon compte créé
+- second facteur obligatoire (TOTP via le plugin twoFactor, ou passkey)
+- sessions stockées en base, révocables
+- vérification de la session côté serveur dans chaque page, route et
+  server action qui accède aux données, et pas uniquement dans proxy.ts
+
+## Justification
+
+### Better Auth
+- (+) Activement maintenu, devenu la référence open source pour Next.js
+- (+) Les utilisateurs et sessions sont dans ma base Neon, via Drizzle
+- (+) 2FA, passkeys et rate limiting disponibles
+- (+) Sessions en base : je peux révoquer une session volée
+- (+) Gratuit, open source
+- (-) Pas d'interface fournie : les pages de connexion sont à écrire
+- (-) Ajoute des tables et des migrations à maintenir
+
+### Auth.js / NextAuth v5
+- (+) Très répandu, beaucoup de ressources
+- (-) En mode maintenance (correctifs de sécurité uniquement), v5 restée
+  en bêta
+- (-) Déconseillé pour un nouveau projet
+
+### Clerk
+- (+) Mise en place très rapide, interface fournie
+- (-) Données d'authentification hébergées chez un tiers
+- (-) Dépendance à un service commercial, moins formateur
+
+### Implémentation maison
+- (+) Très formateur
+- (-) Risque élevé d'erreur de sécurité (stockage des mots de passe,
+  fixation de session, CSRF, rate limiting, 2FA)
+- (-) Réinvente des mécanismes éprouvés : à réserver à un exercice, pas
+  à des données réelles
+
+## Conséquences
+
+- Nouvelles tables (user, session, account, verification, two_factor)
+  générées et migrées via Drizzle
+- Un secret BETTER_AUTH_SECRET (32 caractères minimum, aléatoire) à
+  ajouter dans .env (local), dans Vercel (prod) et en factice dans
+  .env.example
+- proxy.ts sert uniquement de première barrière (redirection vers la page
+  de connexion) ; la vraie vérification se fait côté serveur, au plus près
+  des données
+- Mon compte est créé une seule fois, puis l'inscription est désactivée
+- Les codes de secours du 2FA sont conservés dans mon gestionnaire de mots
+  de passe
+- Le contrôle d'accès est couvert par des tests (une requête sans session
+  sur une route protégée doit être refusée)
