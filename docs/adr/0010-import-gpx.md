@@ -11,10 +11,12 @@ La liaison directe avec l'API COROS est envisagée plus tard ; en attendant,
 les activités sont importées manuellement par fichier.
 
 Deux types de séances existent :
+
 - la course : enregistrée avec GPS, elle produit une trace
 - la musculation : sans GPS, elle n'a pas de trace exploitable
 
 Contraintes :
+
 - Format exportable depuis COROS (et idéalement depuis d'autres montres)
 - Parsing réalisé dans l'application, en TypeScript, et testable
 - Les fichiers sont envoyés par le navigateur : ce sont des entrées non
@@ -36,6 +38,7 @@ Contraintes :
   le schéma
 
 Règles d'import :
+
 - Upload réservé à l'utilisateur authentifié (vérification de session côté
   serveur)
 - Taille maximale du fichier : 10 Mo
@@ -50,6 +53,7 @@ si présentes dans les extensions, fréquence cardiaque moyenne et maximale.
 ## Justification
 
 ### GPX
+
 - (+) Format ouvert et standard, exporté par la plupart des montres et
   plateformes
 - (+) Lisible (XML) : facile à comprendre, à déboguer et à tester
@@ -62,17 +66,20 @@ si présentes dans les extensions, fréquence cardiaque moyenne et maximale.
   mal configuré
 
 ### FIT
+
 - (+) Format le plus complet (tours, calories, capteurs)
 - (+) Format natif de COROS
 - (-) Binaire : moins lisible, dépend d'une bibliothèque de décodage
 - (-) Plus complexe pour un premier import
 
 ### TCX
+
 - (+) XML, contient les tours et la fréquence cardiaque
 - (-) Format Garmin, moins universel que GPX
 - (-) Mêmes risques XML que GPX, pour peu de gain
 
 ### Saisie manuelle uniquement
+
 - (+) Aucun parsing, aucun risque lié aux fichiers
 - (-) Fastidieux pour la course, pas de trace ni de dénivelé
 - (+) Adaptée en revanche à la musculation (exercices, séries, charges)
