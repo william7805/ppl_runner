@@ -29,16 +29,19 @@ automatique avec un hook Git `pre-push`.
 ## Justification
 
 ### Base Neon
+
 - (+) Aucune installation locale
 - (-) Risque de toucher aux données de production
 - (-) Dépend de la connexion internet et des quotas gratuits
 
 ### PostgreSQL natif
+
 - (+) Pas de couche Docker
 - (-) Version difficile à aligner avec la production
 - (-) Pollue la machine, peu reproductible
 
 ### Docker Compose
+
 - (+) Environnement reproductible et jetable
 - (+) Version de PostgreSQL alignée avec Neon
 - (+) Même principe que le service container utilisé dans la CI
