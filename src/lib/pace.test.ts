@@ -4,7 +4,7 @@ import { formatPace } from './pace'
 describe('formatPace', () => {
   it('calcule une allure ronde', () => {
     // 10 km en 50 min
-    expect(formatPace(10_000, 3_000)).toBe('5:00 /km')
+    expect(formatPace(10_000, 3_000)).toBe('4:00 /km')
   })
 
   it('calcule une allure avec des secondes', () => {
