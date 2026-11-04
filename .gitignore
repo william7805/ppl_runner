@@ -48,3 +48,7 @@ next-env.d.ts
 *.GPX
 data/*
 !data/.gitkeep
+
+.vercel
+.env*
+!.env.example
