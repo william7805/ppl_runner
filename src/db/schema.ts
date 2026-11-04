@@ -1,3 +1,4 @@
+export * from './auth-schema'
 import { integer, pgEnum, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export const activityType = pgEnum('activity_type', ['run', 'strength'])
