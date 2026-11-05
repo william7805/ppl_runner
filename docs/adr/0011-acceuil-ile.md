@@ -41,3 +41,7 @@ En V1 :
 - Négatif : remplacer l'image impose de garder le même cadrage, sinon les
   positions des lieux sont à recalculer.
 - Sur petit écran, la carte est remplacée par une liste des lieux.
+- L'île 2D de l'ADR 0011 est abandonnée, sans solution de repli : le site
+  est réservé à moi et à quelques amis, sur des navigateurs récents qui
+  gèrent tous WebGL. Maintenir deux versions de l'île n'en vaut pas la
+  peine. À reconsidérer si le site s'ouvre à plus de monde.
