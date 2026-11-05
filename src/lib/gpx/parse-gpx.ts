@@ -18,13 +18,20 @@ type TrackPoint = GeoPoint & {
   hr: number | null
 }
 
-// Forme brute renvoyée par le parser XML (toutes les valeurs sont des chaînes)
+// Forme brute renvoyée par le parser XML (toutes les valeurs sont des chaînes).
+// La fréquence cardiaque peut arriver sous deux formes, selon la montre :
+// - Garmin et la plupart des apps : <extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>
+// - COROS (namespace cluetrust gpxdata) : <extensions><gpxdata:hr>
+type RawExtensions = {
+  hr?: string
+  TrackPointExtension?: { hr?: string }
+}
 type RawPoint = {
   lat?: string
   lon?: string
   ele?: string
   time?: string
-  extensions?: { TrackPointExtension?: { hr?: string } }
+  extensions?: RawExtensions
 }
 type RawGpx = { trk?: { trkseg?: { trkpt?: RawPoint[] }[] }[] }
 
@@ -35,7 +42,7 @@ const FORBIDDEN_DECLARATIONS = /<!DOCTYPE|<!ENTITY/i
 const parser = new XMLParser({
   ignoreAttributes: false, // on a besoin des attributs lat et lon
   attributeNamePrefix: '',
-  removeNSPrefix: true, // "gpxtpx:hr" devient "hr", quel que soit le préfixe
+  removeNSPrefix: true, // "gpxtpx:hr" et "gpxdata:hr" deviennent "hr"
   processEntities: false, // aucune entité n'est interprétée
   parseTagValue: false, // on convertit nous-mêmes, avec validation
   isArray: (name) => ['trk', 'trkseg', 'trkpt'].includes(name),
@@ -45,6 +52,13 @@ function toNumber(value: string | undefined): number | null {
   if (value === undefined || value.trim() === '') return null
   const n = Number(value)
   return Number.isFinite(n) ? n : null
+}
+
+// Cherche la fréquence cardiaque dans les formats connus, Garmin en premier
+function readHeartRate(extensions: RawExtensions | undefined): number | null {
+  const hr = toNumber(extensions?.TrackPointExtension?.hr ?? extensions?.hr)
+  // Ignorée si physiologiquement absurde
+  return hr !== null && hr >= 20 && hr <= 250 ? hr : null
 }
 
 function toTrackPoint(raw: RawPoint, index: number): TrackPoint {
@@ -64,11 +78,13 @@ function toTrackPoint(raw: RawPoint, index: number): TrackPoint {
     throw new GpxError(`Point ${index + 1} : horodatage manquant ou invalide.`)
   }
 
-  // Fréquence cardiaque : ignorée si absente ou physiologiquement absurde
-  const hr = toNumber(raw.extensions?.TrackPointExtension?.hr)
-  const plausibleHr = hr !== null && hr >= 20 && hr <= 250 ? hr : null
-
-  return { lat, lon, ele: toNumber(raw.ele), time, hr: plausibleHr }
+  return {
+    lat,
+    lon,
+    ele: toNumber(raw.ele),
+    time,
+    hr: readHeartRate(raw.extensions),
+  }
 }
 
 export function parseGpx(xml: string): GpxActivity {

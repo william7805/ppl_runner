@@ -1,19 +1,31 @@
 import { describe, expect, it } from 'vitest'
 import { GpxError, parseGpx } from './parse-gpx'
 
-function point(lon: number, time: string, ele?: number, hr?: number): string {
+type HrFormat = 'garmin' | 'coros'
+
+function point(
+  lon: number,
+  time: string,
+  ele?: number,
+  hr?: number,
+  format: HrFormat = 'garmin'
+): string {
   const eleTag = ele !== undefined ? `<ele>${ele}</ele>` : ''
-  const hrTag =
-    hr !== undefined
-      ? `<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>${hr}</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>`
-      : ''
+  let hrTag = ''
+  if (hr !== undefined) {
+    hrTag =
+      format === 'garmin'
+        ? `<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>${hr}</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>`
+        : `<extensions><gpxdata:hr>${hr}</gpxdata:hr><gpxdata:cadence>84</gpxdata:cadence></extensions>`
+  }
   return `<trkpt lat="0" lon="${lon}">${eleTag}<time>${time}</time>${hrTag}</trkpt>`
 }
 
 function gpx(points: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1"
-     xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+     xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
+     xmlns:gpxdata="http://www.cluetrust.com/XML/GPXDATA/1/0">
   <trk><trkseg>${points}</trkseg></trk>
 </gpx>`
 }
@@ -47,7 +59,7 @@ describe('parseGpx : fichiers valides', () => {
     expect(result.elevationGainMeters).toBe(13)
   })
 
-  it('calcule la fréquence cardiaque moyenne et maximale', () => {
+  it('calcule la fréquence cardiaque moyenne et maximale (format Garmin)', () => {
     const result = parseGpx(
       gpx(
         point(0, T0, 10, 140) +
@@ -57,6 +69,25 @@ describe('parseGpx : fichiers valides', () => {
     )
     expect(result.avgHeartRate).toBe(150)
     expect(result.maxHeartRate).toBe(160)
+  })
+
+  it('lit la fréquence cardiaque au format COROS (gpxdata)', () => {
+    const result = parseGpx(
+      gpx(
+        point(0, T0, 10, 124, 'coros') +
+          point(0.001, T1, 10, 130, 'coros') +
+          point(0.002, T2, 10, 136, 'coros')
+      )
+    )
+    expect(result.avgHeartRate).toBe(130)
+    expect(result.maxHeartRate).toBe(136)
+  })
+
+  it('ignore une fréquence cardiaque absurde au format COROS', () => {
+    const result = parseGpx(
+      gpx(point(0, T0, 10, 999, 'coros') + point(0.001, T1, 10, 150, 'coros'))
+    )
+    expect(result.maxHeartRate).toBe(150)
   })
 
   it('renvoie null pour la fréquence cardiaque si elle est absente', () => {
