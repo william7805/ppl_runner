@@ -6,12 +6,19 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ComponentRef,
+  type RefObject,
 } from 'react'
 import Link from 'next/link'
 import { Vector3 } from 'three'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Clone, OrbitControls, useGLTF } from '@react-three/drei'
-import { PLACES, type Place, type PlaceId } from '@/lib/places'
+import {
+  PLACES,
+  type Place,
+  type PlaceId,
+  type PlaceSubtitles,
+} from '@/lib/places'
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
@@ -27,6 +34,10 @@ const MAX_ZOOM_DISTANCE = 60
 const RESUME_DELAY_MS = 2000
 // 2 = un tour en 30 s, 5 = un tour en 12 s
 const AUTO_ROTATE_SPEED = 1.2
+// Pas des boutons de contrôle
+const ROTATE_STEP = Math.PI / 8 // 22,5°
+const TILT_STEP = Math.PI / 12 // 15°
+const ZOOM_STEP = 1.2 // ×1,2 en dézoom, ÷1,2 en zoom
 
 // Les modèles sont exportés avec l'axe Z vers le haut, Three.js utilise
 // l'axe Y : on fait pivoter tout le monde d'un quart de tour autour de X
@@ -63,6 +74,7 @@ const LABEL_ANCHORS = PLACES.map((place) => {
 })
 
 type LabelElements = Partial<Record<PlaceId, HTMLElement | null>>
+type Controls = ComponentRef<typeof OrbitControls>
 
 function subscribeToReducedMotion(onChange: () => void) {
   const media = window.matchMedia(REDUCED_MOTION_QUERY)
@@ -102,7 +114,7 @@ function Building({ place }: { place: Place }) {
  * À chaque image, calcule la position à l'écran de chaque point d'accroche
  * et y déplace l'étiquette HTML correspondante.
  */
-function LabelTracker({ labels }: { labels: React.RefObject<LabelElements> }) {
+function LabelTracker({ labels }: { labels: RefObject<LabelElements> }) {
   const projected = useRef(new Vector3())
 
   useFrame(({ camera, size }) => {
@@ -124,12 +136,19 @@ function LabelTracker({ labels }: { labels: React.RefObject<LabelElements> }) {
   return null
 }
 
-function PlaceLabel({ place }: { place: Place }) {
-  const base = `flex items-center gap-2 whitespace-nowrap rounded-full border-2 bg-slate-900/90 px-4 py-2 font-semibold ${ACCENTS[place.id]}`
+function PlaceLabel({ place, subtitle }: { place: Place; subtitle?: string }) {
+  const base = `flex items-center gap-3 whitespace-nowrap rounded-full border-2 bg-slate-900/90 px-4 py-2 ${ACCENTS[place.id]}`
   const content = (
     <>
-      <span aria-hidden="true">{place.icon}</span>
-      <span>{place.label}</span>
+      <span aria-hidden="true" className="text-xl">
+        {place.icon}
+      </span>
+      <span className="flex flex-col text-left leading-tight">
+        <span className="font-semibold">{place.label}</span>
+        <span className="text-xs opacity-80">
+          {place.href ? subtitle : 'Bientôt'}
+        </span>
+      </span>
     </>
   )
 
@@ -140,7 +159,6 @@ function PlaceLabel({ place }: { place: Place }) {
         aria-disabled="true"
       >
         {content}
-        <span className="text-xs font-normal">Bientôt</span>
       </div>
     )
   }
@@ -152,16 +170,92 @@ function PlaceLabel({ place }: { place: Place }) {
   )
 }
 
-export default function IslandScene() {
+type ControlButtonProps = {
+  label: string
+  symbol: string
+  onClick: () => void
+  pressed?: boolean
+}
+
+function ControlButton({
+  label,
+  symbol,
+  onClick,
+  pressed,
+}: ControlButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/30 bg-slate-900/90 text-lg font-bold text-white transition hover:border-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+    >
+      <span aria-hidden="true">{symbol}</span>
+    </button>
+  )
+}
+
+export default function IslandScene({
+  subtitles,
+}: {
+  subtitles: PlaceSubtitles
+}) {
   const reducedMotion = usePrefersReducedMotion()
+  // Choix explicite de l'utilisateur ; null = on suit le réglage du système
+  const [rotationChoice, setRotationChoice] = useState<boolean | null>(null)
   const [isPaused, setIsPaused] = useState(false)
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   )
   const labels = useRef<LabelElements>({})
+  const controls = useRef<Controls>(null)
+
+  const isRotating = rotationChoice ?? !reducedMotion
 
   // Annule le minuteur si la page est quittée pendant la pause
   useEffect(() => () => clearTimeout(resumeTimer.current), [])
+
+  // Un bouton agit comme un geste : la rotation s'interrompt puis reprend
+  function pauseThenResume() {
+    clearTimeout(resumeTimer.current)
+    setIsPaused(true)
+    resumeTimer.current = setTimeout(() => setIsPaused(false), RESUME_DELAY_MS)
+  }
+
+  function rotate(delta: number) {
+    const c = controls.current
+    if (!c) return
+    pauseThenResume()
+    c.setAzimuthalAngle(c.getAzimuthalAngle() + delta)
+    c.update()
+  }
+
+  function tilt(delta: number) {
+    const c = controls.current
+    if (!c) return
+    pauseThenResume()
+    // Les limites minPolarAngle / maxPolarAngle sont appliquées par update()
+    c.setPolarAngle(c.getPolarAngle() + delta)
+    c.update()
+  }
+
+  function zoom(factor: number) {
+    const c = controls.current
+    if (!c) return
+    pauseThenResume()
+    // On rapproche ou on éloigne la caméra le long de la droite qui la relie
+    // au centre de l'île, en respectant les limites du zoom
+    const offset = c.object.position.clone().sub(c.target)
+    const distance = Math.min(
+      MAX_ZOOM_DISTANCE,
+      Math.max(MIN_ZOOM_DISTANCE, offset.length() * factor)
+    )
+    offset.setLength(distance)
+    c.object.position.copy(c.target).add(offset)
+    c.update()
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -207,6 +301,7 @@ export default function IslandScene() {
         <LabelTracker labels={labels} />
 
         <OrbitControls
+          ref={controls}
           // Rotation dans les deux sens et zoom : de la vue au ras de l'eau
           // jusqu'à la vue du dessus, sans déplacement latéral
           minPolarAngle={CAMERA_MIN_ANGLE}
@@ -214,7 +309,7 @@ export default function IslandScene() {
           minDistance={MIN_ZOOM_DISTANCE}
           maxDistance={MAX_ZOOM_DISTANCE}
           enablePan={false}
-          autoRotate={!reducedMotion && !isPaused}
+          autoRotate={isRotating && !isPaused}
           autoRotateSpeed={AUTO_ROTATE_SPEED}
           onStart={() => {
             clearTimeout(resumeTimer.current)
@@ -241,9 +336,61 @@ export default function IslandScene() {
             className="pointer-events-auto absolute left-0 top-0"
             style={{ visibility: 'hidden' }}
           >
-            <PlaceLabel place={place} />
+            <PlaceLabel place={place} subtitle={subtitles[place.id]} />{' '}
           </div>
         ))}
+      </div>
+
+      {/* Boutons de contrôle : alternative à la souris, utilisable au clavier */}
+      <div
+        role="toolbar"
+        aria-label="Contrôles de la vue"
+        className="absolute bottom-6 right-6 grid grid-cols-3 gap-2"
+      >
+        <span />
+        <ControlButton
+          label="Monter la caméra"
+          symbol="↑"
+          onClick={() => tilt(-TILT_STEP)}
+        />
+        <ControlButton
+          label="Zoomer"
+          symbol="+"
+          onClick={() => zoom(1 / ZOOM_STEP)}
+        />
+
+        <ControlButton
+          label="Tourner à gauche"
+          symbol="←"
+          onClick={() => rotate(-ROTATE_STEP)}
+        />
+        <ControlButton
+          label={
+            isRotating
+              ? 'Arrêter la rotation automatique'
+              : 'Lancer la rotation automatique'
+          }
+          symbol={isRotating ? '⏸' : '▶'}
+          pressed={isRotating}
+          onClick={() => setRotationChoice(!isRotating)}
+        />
+        <ControlButton
+          label="Tourner à droite"
+          symbol="→"
+          onClick={() => rotate(ROTATE_STEP)}
+        />
+
+        <span />
+        <ControlButton
+          label="Descendre la caméra"
+          symbol="↓"
+          onClick={() => tilt(TILT_STEP)}
+        />
+        <ControlButton
+          label="Dézoomer"
+          symbol="−"
+          onClick={() => zoom(ZOOM_STEP)}
+        />
       </div>
     </div>
   )

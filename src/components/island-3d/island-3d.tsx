@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import type { PlaceSubtitles } from '@/lib/places'
 
 // La scène n'est chargée que dans le navigateur (WebGL n'existe pas côté
 // serveur), et seulement quand ce composant s'affiche : Three.js n'alourdit
@@ -14,10 +15,10 @@ const IslandScene = dynamic(() => import('./island-scene'), {
   ),
 })
 
-export function Island3D() {
+export function Island3D({ subtitles }: { subtitles: PlaceSubtitles }) {
   return (
     <div className="h-[100dvh] w-full">
-      <IslandScene />
+      <IslandScene subtitles={subtitles} />
     </div>
   )
 }

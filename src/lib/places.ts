@@ -65,3 +65,6 @@ export const PLACES: Place[] = [
     labelHeight: 3.2,
   },
 ]
+
+// Texte affiché sous le nom d'un lieu (ex. « Dernière séance : il y a 5 j »)
+export type PlaceSubtitles = Partial<Record<PlaceId, string>>
