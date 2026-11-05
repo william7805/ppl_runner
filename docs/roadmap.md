@@ -31,11 +31,11 @@ avec une page d'accueil en carte isométrique.
 - [x] Environnement local : PostgreSQL 18 via Docker Compose
 - [x] Authentification : Better Auth, TOTP obligatoire, inscription fermée
 - [x] Parser GPX sécurisé et testé
-- [ ] Import d'un fichier GPX depuis le site
-- [ ] Dashboard : liste des courses en vignettes
-- [ ] Statistiques globales (distance de la semaine, du mois, total)
-- [ ] Page de détail d'une activité
-- [ ] Suppression d'une activité
+- [x] Import d'un fichier GPX depuis le site
+- [x] Dashboard : liste des courses en vignettes
+- [x] Statistiques globales (distance de la semaine, du mois, total)
+- [x] Page de détail d'une activité
+- [x] Suppression d'une activité
 - [ ] ADR : page d'accueil en carte isométrique
 - [ ] Page d'accueil : île en image fixe avec lieux cliquables
 - [ ] Lieu « Piste » actif, relié au dashboard des courses
