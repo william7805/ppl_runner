@@ -19,7 +19,7 @@ démarche DevOps (CI/CD, IaC) et sécurité applicative.
 - Minimisation des données : on ne stocke que ce qui est utile
 - Chaque version livrée est marquée par un tag Git et une release GitHub
 
-## V1 : dashboard des courses
+## V1 : dashboard des courses ✅
 
 Objectif : voir mes courses dans un dashboard, à partir d'imports manuels,
 avec une page d'accueil en carte isométrique.
@@ -43,7 +43,19 @@ avec une page d'accueil en carte isométrique.
       en grisé avec un badge « Bientôt »
 - [x] Tag `v1.0.0` et release GitHub
 
-## V2 : toutes les activités
+## V2 : île en 3D
+
+Objectif : remplacer l'image fixe de la page d'accueil par une île en 3D.
+
+- [ ] ADR : passage de l'image fixe à une scène 3D (React Three Fiber)
+- [ ] Design de l'île en 3D avec Blender
+- [ ] Export du modèle en glTF/GLB optimisé pour le web
+- [ ] Île en 3D plein écran (React Three Fiber), caméra en rotation à 360°
+- [ ] Lieux cliquables dans la scène 3D : « Piste » actif, les autres
+      avec le badge « Bientôt »
+- [ ] Tag `v2.0.0` et release GitHub
+
+## V3 : toutes les activités
 
 Objectif : suivre aussi la musculation et les autres sports.
 
@@ -52,11 +64,11 @@ Objectif : suivre aussi la musculation et les autres sports.
 - [ ] Musculation : table dédiée (exercices, séries, répétitions, charges)
 - [ ] Filtres du dashboard par type d'activité
 - [ ] Import FIT en complément du GPX (à évaluer)
-- [ ] Activation des lieux « Piscine » et « Musculation » sur la carte
+- [ ] Activation des lieux « Piscine » et « Musculation » sur l'île
 - [ ] Maison santé : données à définir (poids, sommeil, FC au repos...)
-- [ ] Île en 3D plein écran (React Three Fiber), caméra en rotation à 360°
+- [ ] Tag `v3.0.0` et release GitHub
 
-## V3 : synchronisation COROS
+## V4 : synchronisation COROS
 
 Objectif : ne plus importer de fichiers à la main.
 
@@ -66,8 +78,9 @@ Objectif : ne plus importer de fichiers à la main.
 - [ ] Import automatique des nouvelles activités
 - [ ] Gestion des doublons avec les imports manuels
 - [ ] Déconnexion et révocation de l'accès
+- [ ] Tag `v4.0.0` et release GitHub
 
-## V4 : ouverture à quelques amis
+## V5 : ouverture à quelques amis
 
 Objectif : faire tester le site par 2 ou 3 personnes.
 
@@ -79,8 +92,9 @@ Objectif : faire tester le site par 2 ou 3 personnes.
 - [ ] RGPD : page d'information sur les données stockées, consentement,
       export et suppression du compte
 - [ ] Sauvegardes régulières de la base
+- [ ] Tag `v5.0.0` et release GitHub
 
-## V5 : analyse avec l'API Claude
+## V6 : analyse avec l'API Claude
 
 Objectif : obtenir un feedback sur mes séances et planifier l'entraînement.
 
@@ -90,6 +104,7 @@ Objectif : obtenir un feedback sur mes séances et planifier l'entraînement.
 - [ ] Feedback sur une activité
 - [ ] Analyse de tendances sur plusieurs semaines
 - [ ] Planification de séances (avec écriture vers COROS si possible)
+- [ ] Tag `v6.0.0` et release GitHub
 
 ## Chantiers transverses
 
@@ -107,13 +122,14 @@ Objectif : obtenir un feedback sur mes séances et planifier l'entraînement.
 
 | Version | Tag Git  | Contenu                                                      | État     |
 | ------- | -------- | ------------------------------------------------------------ | -------- |
-| V1      | `v1.0.0` | Dashboard des courses, import GPX manuel                     | En cours |
-| V2      | `v2.0.0` | Toutes les activités, dont la musculation en saisie manuelle | Prévue   |
-| V3      | `v3.0.0` | Synchronisation automatique avec COROS (OAuth 2.0)           | Prévue   |
-| V4      | `v4.0.0` | Ouverture à 2 ou 3 amis, inscription sur invitation          | Prévue   |
-| V5      | `v5.0.0` | Analyse et planification avec l'API Claude                   | Prévue   |
+| V1      | `v1.0.0` | Dashboard des courses, import GPX manuel, île en image fixe  | Livrée   |
+| V2      | `v2.0.0` | Page d'accueil avec l'île en 3D (Blender, React Three Fiber) | En cours |
+| V3      | `v3.0.0` | Toutes les activités, dont la musculation en saisie manuelle | Prévue   |
+| V4      | `v4.0.0` | Synchronisation automatique avec COROS (OAuth 2.0)           | Prévue   |
+| V5      | `v5.0.0` | Ouverture à 2 ou 3 amis, inscription sur invitation          | Prévue   |
+| V6      | `v6.0.0` | Analyse et planification avec l'API Claude                   | Prévue   |
 
-L'ordre de V3 et V4 peut être inversé selon les priorités du moment.
+L'ordre de V4 et V5 peut être inversé selon les priorités du moment.
 
 ### Numérotation
 
