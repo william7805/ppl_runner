@@ -36,12 +36,12 @@ avec une page d'accueil en carte isométrique.
 - [x] Statistiques globales (distance de la semaine, du mois, total)
 - [x] Page de détail d'une activité
 - [x] Suppression d'une activité
-- [ ] ADR : page d'accueil en carte isométrique
-- [ ] Page d'accueil : île en image fixe avec lieux cliquables
-- [ ] Lieu « Piste » actif, relié au dashboard des courses
-- [ ] Lieux « Piscine », « Musculation » et « Maison santé » affichés
+- [x] ADR : page d'accueil en carte isométrique
+- [x] Page d'accueil : île en image fixe avec lieux cliquables
+- [x] Lieu « Piste » actif, relié au dashboard des courses
+- [x] Lieux « Piscine », « Musculation » et « Maison santé » affichés
       en grisé avec un badge « Bientôt »
-- [ ] Tag `v1.0.0` et release GitHub
+- [x] Tag `v1.0.0` et release GitHub
 
 ## V2 : toutes les activités
 
@@ -54,6 +54,7 @@ Objectif : suivre aussi la musculation et les autres sports.
 - [ ] Import FIT en complément du GPX (à évaluer)
 - [ ] Activation des lieux « Piscine » et « Musculation » sur la carte
 - [ ] Maison santé : données à définir (poids, sommeil, FC au repos...)
+- [ ] Île en 3D plein écran (React Three Fiber), caméra en rotation à 360°
 
 ## V3 : synchronisation COROS
 
