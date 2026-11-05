@@ -23,7 +23,12 @@ const MS_PER_DAY = 86_400_000
  * Une course le lundi à 0 h 30 à Paris est le dimanche à 23 h 30 en UTC :
  * il faut raisonner en heure de Paris pour la ranger dans la bonne semaine.
  */
-function parisDay(date: Date) {
+/**
+ * Jour calendaire d'une date, vu depuis Paris.
+ * Une course le lundi à 0 h 30 à Paris est le dimanche à 23 h 30 en UTC :
+ * il faut raisonner en heure de Paris pour la ranger dans la bonne semaine.
+ */
+export function parisDay(date: Date) {
   const parts = dayFormatter.formatToParts(date)
   const get = (type: string) =>
     Number(parts.find((p) => p.type === type)?.value)
