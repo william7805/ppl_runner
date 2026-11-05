@@ -15,6 +15,13 @@
       "when": 1793825699448,
       "tag": "0001_unique_phalanx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793875948886,
+      "tag": "0002_eminent_crystal",
+      "breakpoints": true
     }
   ]
 }
