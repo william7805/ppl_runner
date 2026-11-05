@@ -21,7 +21,8 @@ démarche DevOps (CI/CD, IaC) et sécurité applicative.
 
 ## V1 : dashboard des courses
 
-Objectif : voir mes courses dans un dashboard, à partir d'imports manuels.
+Objectif : voir mes courses dans un dashboard, à partir d'imports manuels,
+avec une page d'accueil en carte isométrique.
 
 - [x] Stack : monolithe Next.js, TypeScript, PostgreSQL, Drizzle
 - [x] CI : format, lint, typecheck, tests, build
@@ -35,6 +36,11 @@ Objectif : voir mes courses dans un dashboard, à partir d'imports manuels.
 - [ ] Statistiques globales (distance de la semaine, du mois, total)
 - [ ] Page de détail d'une activité
 - [ ] Suppression d'une activité
+- [ ] ADR : page d'accueil en carte isométrique
+- [ ] Page d'accueil : île en image fixe avec lieux cliquables
+- [ ] Lieu « Piste » actif, relié au dashboard des courses
+- [ ] Lieux « Piscine », « Musculation » et « Maison santé » affichés
+      en grisé avec un badge « Bientôt »
 - [ ] Tag `v1.0.0` et release GitHub
 
 ## V2 : toutes les activités
@@ -46,6 +52,8 @@ Objectif : suivre aussi la musculation et les autres sports.
 - [ ] Musculation : table dédiée (exercices, séries, répétitions, charges)
 - [ ] Filtres du dashboard par type d'activité
 - [ ] Import FIT en complément du GPX (à évaluer)
+- [ ] Activation des lieux « Piscine » et « Musculation » sur la carte
+- [ ] Maison santé : données à définir (poids, sommeil, FC au repos...)
 
 ## V3 : synchronisation COROS
 
