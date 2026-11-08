@@ -131,3 +131,46 @@ export function computeWeekStats(
     pace: formatPace(pacedMeters, pacedSeconds),
   }
 }
+
+export type WeeklyDistance = {
+  /** Lundi de la semaine, ex. "2 nov." */
+  label: string
+  km: number
+}
+
+const weekLabelFormatter = new Intl.DateTimeFormat('fr-FR', {
+  // dayNumber correspond déjà au jour de Paris : on l'affiche tel quel en UTC
+  timeZone: 'UTC',
+  day: 'numeric',
+  month: 'short',
+})
+
+/**
+ * Kilomètres par semaine (du lundi) sur les `weeks` dernières semaines,
+ * semaine en cours comprise, de la plus ancienne à la plus récente.
+ * Les semaines sans course apparaissent avec 0 km.
+ */
+export function computeWeeklyDistance(
+  items: StatInput[],
+  weeks = 12,
+  now: Date = new Date()
+): WeeklyDistance[] {
+  const today = parisDay(now)
+  const currentWeekStart = today.dayNumber - today.weekdayFromMonday
+  const firstWeekStart = currentWeekStart - (weeks - 1) * 7
+
+  const meters = new Array<number>(weeks).fill(0)
+  for (const item of items) {
+    const day = parisDay(item.startedAt).dayNumber
+    if (day < firstWeekStart || day > today.dayNumber) continue
+    const index = Math.floor((day - firstWeekStart) / 7)
+    meters[index] += item.distanceMeters ?? 0
+  }
+
+  return meters.map((m, i) => ({
+    label: weekLabelFormatter.format(
+      new Date((firstWeekStart + i * 7) * MS_PER_DAY)
+    ),
+    km: Math.round(m / 100) / 10, // une décimale
+  }))
+}

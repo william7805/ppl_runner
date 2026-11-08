@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { computeDistanceStats, computeWeekStats } from './stats'
+import {
+  computeDistanceStats,
+  computeWeekStats,
+  computeWeeklyDistance,
+} from './stats'
 // Jeudi 5 novembre 2026, 19 h à Paris
 const NOW = new Date('2026-11-05T18:00:00Z')
 
@@ -119,5 +123,53 @@ describe('computeWeekStats', () => {
     )
     expect(stats.current.count).toBe(2)
     expect(stats.pace).toBe('5:00 /km')
+  })
+})
+
+describe('computeWeeklyDistance', () => {
+  const run = (iso: string, distanceMeters: number | null) => ({
+    startedAt: new Date(iso),
+    distanceMeters,
+  })
+
+  it('renvoie 12 semaines à 0 km sans activité, la plus récente en dernier', () => {
+    const weeks = computeWeeklyDistance([], 12, NOW)
+    expect(weeks).toHaveLength(12)
+    expect(weeks.every((w) => w.km === 0)).toBe(true)
+    expect(weeks[11].label).toBe('2 nov.') // lundi de la semaine en cours
+    expect(weeks[0].label).toBe('17 août')
+  })
+
+  it('range chaque course dans sa semaine et arrondit à une décimale', () => {
+    const weeks = computeWeeklyDistance(
+      [
+        run('2026-11-03T07:00:00Z', 5000), // semaine en cours
+        run('2026-11-04T07:00:00Z', 7340), // semaine en cours
+        run('2026-10-28T07:00:00Z', 8000), // semaine précédente
+      ],
+      12,
+      NOW
+    )
+    expect(weeks[11].km).toBe(12.3)
+    expect(weeks[10].km).toBe(8)
+  })
+
+  it('ignore les courses trop anciennes', () => {
+    const weeks = computeWeeklyDistance(
+      [run('2026-08-10T07:00:00Z', 10000)],
+      12,
+      NOW
+    )
+    expect(weeks.every((w) => w.km === 0)).toBe(true)
+  })
+
+  it("utilise le lundi à Paris, même si c'est dimanche en UTC", () => {
+    // Lundi 2 novembre, 0 h 30 à Paris = dimanche 1er novembre, 23 h 30 UTC
+    const weeks = computeWeeklyDistance(
+      [run('2026-11-01T23:30:00Z', 1000)],
+      12,
+      NOW
+    )
+    expect(weeks[11].km).toBe(1)
   })
 })
