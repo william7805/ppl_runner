@@ -34,3 +34,15 @@ const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
 export function formatDateTime(date: Date): string {
   return dateTimeFormatter.format(date)
 }
+
+const shortDateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: TIME_ZONE,
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+})
+
+/** 2026-11-07T08:00:00Z → "sam. 7 nov." */
+export function formatShortDate(date: Date): string {
+  return shortDateFormatter.format(date)
+}
