@@ -1,4 +1,4 @@
-import { TIME_ZONE } from './format'
+import { TIME_ZONE, formatShortDate } from './format'
 import { formatPace } from './pace'
 
 type StatInput = { startedAt: Date; distanceMeters: number | null }
@@ -173,4 +173,41 @@ export function computeWeeklyDistance(
     ),
     km: Math.round(m / 100) / 10, // une décimale
   }))
+}
+
+type RunInput = {
+  startedAt: Date
+  distanceMeters: number | null
+  durationSeconds: number
+  avgHeartRate: number | null
+}
+
+export type RunPoint = {
+  /** Date courte, ex. "sam. 7 nov." */
+  label: string
+  /** Allure en secondes par km */
+  paceSeconds: number
+  avgHeartRate: number | null
+}
+
+/**
+ * Allure et FC moyenne des `limit` dernières courses, de la plus ancienne
+ * à la plus récente. Attend des courses triées de la plus récente à la plus
+ * ancienne (l'ordre de la requête du dashboard). Les courses sans distance
+ * sont ignorées : impossible d'en calculer l'allure.
+ */
+export function computeRunSeries(items: RunInput[], limit = 20): RunPoint[] {
+  return items
+    .filter(
+      (item) => (item.distanceMeters ?? 0) > 0 && item.durationSeconds > 0
+    )
+    .slice(0, limit)
+    .reverse()
+    .map((item) => ({
+      label: formatShortDate(item.startedAt),
+      paceSeconds: Math.round(
+        item.durationSeconds / ((item.distanceMeters ?? 0) / 1000)
+      ),
+      avgHeartRate: item.avgHeartRate,
+    }))
 }

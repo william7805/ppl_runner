@@ -3,6 +3,7 @@ import {
   computeDistanceStats,
   computeWeekStats,
   computeWeeklyDistance,
+  computeRunSeries,
 } from './stats'
 // Jeudi 5 novembre 2026, 19 h à Paris
 const NOW = new Date('2026-11-05T18:00:00Z')
@@ -171,5 +172,50 @@ describe('computeWeeklyDistance', () => {
       NOW
     )
     expect(weeks[11].km).toBe(1)
+  })
+})
+
+describe('computeRunSeries', () => {
+  const run = (
+    iso: string,
+    distanceMeters: number | null,
+    durationSeconds: number,
+    avgHeartRate: number | null = null
+  ) => ({
+    startedAt: new Date(iso),
+    distanceMeters,
+    durationSeconds,
+    avgHeartRate,
+  })
+
+  it("remet les courses dans l'ordre chronologique", () => {
+    const series = computeRunSeries([
+      run('2026-11-04T07:00:00Z', 10000, 3000, 150), // la plus récente
+      run('2026-11-02T07:00:00Z', 5000, 1650, 145),
+    ])
+    expect(series).toEqual([
+      { label: 'lun. 2 nov.', paceSeconds: 330, avgHeartRate: 145 },
+      { label: 'mer. 4 nov.', paceSeconds: 300, avgHeartRate: 150 },
+    ])
+  })
+
+  it('garde seulement les plus récentes', () => {
+    const series = computeRunSeries(
+      [
+        run('2026-11-04T07:00:00Z', 10000, 3000),
+        run('2026-11-03T07:00:00Z', 10000, 3000),
+        run('2026-11-02T07:00:00Z', 10000, 3000),
+      ],
+      2
+    )
+    expect(series.map((p) => p.label)).toEqual(['mar. 3 nov.', 'mer. 4 nov.'])
+  })
+
+  it('ignore les courses sans distance', () => {
+    const series = computeRunSeries([
+      run('2026-11-04T07:00:00Z', null, 3000),
+      run('2026-11-03T07:00:00Z', 0, 3000),
+    ])
+    expect(series).toEqual([])
   })
 })
