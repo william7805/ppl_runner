@@ -1,7 +1,7 @@
 import type { GeoPoint } from './distance'
-import { encodePolyline } from './polyline'
 import { trimPrivacyZone } from './privacy'
 import { simplifyTrack } from './simplify'
+import { decodePolyline, encodePolyline } from './polyline'
 
 /**
  * Prépare la trace à stocker en base (ADR 0014) :
@@ -15,4 +15,21 @@ export function buildTrack(points: GeoPoint[]): string | null {
   const trimmed = trimPrivacyZone(points)
   if (trimmed.length < 2) return null
   return encodePolyline(simplifyTrack(trimmed))
+}
+
+/**
+ * Décode une trace stockée en points [longitude, latitude], l'ordre attendu
+ * par MapLibre (et par GeoJSON). Renvoie null si la trace est absente ou
+ * illisible : la page affiche alors un message au lieu de planter.
+ */
+export function trackToCoordinates(
+  track: string | null
+): [number, number][] | null {
+  if (!track) return null
+  try {
+    const points = decodePolyline(track)
+    return points.length >= 2 ? points.map((p) => [p.lon, p.lat]) : null
+  } catch {
+    return null
+  }
 }

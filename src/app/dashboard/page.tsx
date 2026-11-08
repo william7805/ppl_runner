@@ -5,6 +5,8 @@ import { activities } from '@/db/schema'
 import { formatDateTime, formatDistance, formatDuration } from '@/lib/format'
 import { formatPace } from '@/lib/pace'
 import { requireSession } from '@/lib/session'
+import { trackToCoordinates } from '@/lib/gpx/track'
+import { RouteMap } from './route-map'
 import {
   computeDistanceStats,
   computeRunSeries,
@@ -35,6 +37,7 @@ export default async function DashboardPage() {
   const totals = computeDistanceStats(runs)
   const week = computeWeekStats(runs)
   const lastRun = runs[0]
+  const lastRunCoordinates = trackToCoordinates(lastRun?.track ?? null)
   const weekly = computeWeeklyDistance(runs)
   const series = computeRunSeries(runs)
 
@@ -102,8 +105,18 @@ export default async function DashboardPage() {
                   </div>
                 </dl>
                 {/* Emplacement de la carte du parcours */}
-                <div className="mt-4 flex h-48 items-center justify-center rounded-xl border-2 border-dashed border-white/20 text-sm text-white/50">
-                  Carte du parcours : bientôt
+                <div className="mt-4">
+                  {lastRunCoordinates ? (
+                    <RouteMap
+                      coordinates={lastRunCoordinates}
+                      label="Carte du parcours de la dernière course"
+                    />
+                  ) : (
+                    <p className="flex h-48 items-center justify-center rounded-xl border-2 border-dashed border-white/20 p-4 text-center text-sm text-white/50">
+                      Pas de trace pour cette course : elle est trop courte, ou
+                      a été importée avant l&apos;ajout des cartes.
+                    </p>
+                  )}
                 </div>
               </>
             ) : (
