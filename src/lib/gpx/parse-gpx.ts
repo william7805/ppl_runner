@@ -1,6 +1,6 @@
 import { XMLParser, XMLValidator } from 'fast-xml-parser'
 import { distanceBetween, type GeoPoint } from './distance'
-
+import { buildTrack } from './track'
 export class GpxError extends Error {}
 
 export type GpxActivity = {
@@ -10,6 +10,8 @@ export type GpxActivity = {
   elevationGainMeters: number
   avgHeartRate: number | null
   maxHeartRate: number | null
+  /** Trace prête à stocker (encoded polyline), null si trop courte */
+  track: string | null
 }
 
 type TrackPoint = GeoPoint & {
@@ -153,5 +155,6 @@ export function parseGpx(xml: string): GpxActivity {
           )
         : null,
     maxHeartRate: heartRates.length > 0 ? Math.max(...heartRates) : null,
+    track: buildTrack(points),
   }
 }

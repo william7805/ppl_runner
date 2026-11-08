@@ -22,6 +22,13 @@
       "when": 1793875948886,
       "tag": "0002_eminent_crystal",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794173064118,
+      "tag": "0003_petite_iron_patriot",
+      "breakpoints": true
     }
   ]
 }
