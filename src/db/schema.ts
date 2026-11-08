@@ -27,6 +27,10 @@ export const activities = pgTable(
     elevationGainMeters: integer('elevation_gain_meters'),
     avgHeartRate: integer('avg_heart_rate'),
     maxHeartRate: integer('max_heart_rate'),
+    // Trace simplifiée, sans la zone de confidentialité (ADR 0014),
+    // au format encoded polyline. Null : pas de trace (course trop courte,
+    // ou importée avant l'ajout de la carte)
+    track: text('track'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

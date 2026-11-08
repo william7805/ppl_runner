@@ -58,6 +58,7 @@ export async function importGpx(
         elevationGainMeters: parsed.elevationGainMeters,
         avgHeartRate: parsed.avgHeartRate,
         maxHeartRate: parsed.maxHeartRate,
+        track: parsed.track,
       })
       .onConflictDoNothing()
       .returning({ id: activities.id })
