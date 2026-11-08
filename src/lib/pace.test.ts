@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatPace } from './pace'
+import { formatShortDate } from './format'
 
 describe('formatPace', () => {
   it('calcule une allure ronde', () => {
@@ -29,5 +30,14 @@ describe('formatPace', () => {
   it('retourne null si une valeur est négative', () => {
     expect(formatPace(-1_000, 300)).toBeNull()
     expect(formatPace(1_000, -300)).toBeNull()
+  })
+})
+
+describe('formatShortDate', () => {
+  it("affiche le jour à l'heure de Paris", () => {
+    // Samedi 7 novembre, 23 h 30 UTC = dimanche 8 novembre, 0 h 30 à Paris
+    expect(formatShortDate(new Date('2026-11-07T23:30:00Z'))).toBe(
+      'dim. 8 nov.'
+    )
   })
 })
