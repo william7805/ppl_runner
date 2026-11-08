@@ -5,11 +5,17 @@ import { activities } from '@/db/schema'
 import { formatDateTime, formatDistance, formatDuration } from '@/lib/format'
 import { formatPace } from '@/lib/pace'
 import { requireSession } from '@/lib/session'
-import { computeDistanceStats, computeWeekStats } from '@/lib/stats'
+import {
+  computeDistanceStats,
+  computeRunSeries,
+  computeWeekStats,
+  computeWeeklyDistance,
+} from '@/lib/stats'
 import { Card } from './card'
 import { RecentRuns } from './recent-runs'
 import { Sidebar } from './sidebar'
 import { StatTile } from './stat-tile'
+import { ProgressCharts } from './progress-charts'
 
 const signed = (n: number, text: string) =>
   `${n > 0 ? '+' : n < 0 ? '-' : ''}${text}`
@@ -29,6 +35,8 @@ export default async function DashboardPage() {
   const totals = computeDistanceStats(runs)
   const week = computeWeekStats(runs)
   const lastRun = runs[0]
+  const weekly = computeWeeklyDistance(runs)
+  const series = computeRunSeries(runs)
 
   const countDelta = week.current.count - week.previous.count
   const metersDelta = week.current.meters - week.previous.meters
@@ -135,9 +143,7 @@ export default async function DashboardPage() {
 
           {/* Emplacement des graphiques */}
           <Card title="Progression" className="sm:col-span-2 lg:col-span-7">
-            <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-white/20 text-sm text-white/50">
-              Graphiques : bientôt
-            </div>
+            <ProgressCharts weekly={weekly} runs={series} />
           </Card>
 
           <Card
