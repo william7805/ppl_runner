@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeDistanceStats } from './stats'
-
+import { computeDistanceStats, computeWeekStats } from './stats'
 // Jeudi 5 novembre 2026, 19 h à Paris
 const NOW = new Date('2026-11-05T18:00:00Z')
 
@@ -63,5 +62,62 @@ describe('computeDistanceStats', () => {
     )
     expect(stats.totalCount).toBe(1)
     expect(stats.totalMeters).toBe(0)
+  })
+})
+
+describe('computeWeekStats', () => {
+  const run = (
+    iso: string,
+    distanceMeters: number | null,
+    seconds: number
+  ) => ({
+    startedAt: new Date(iso),
+    distanceMeters,
+    durationSeconds: seconds,
+  })
+
+  it("renvoie des zéros et pas d'allure sans activité", () => {
+    expect(computeWeekStats([], NOW)).toEqual({
+      current: { count: 0, meters: 0 },
+      previous: { count: 0, meters: 0 },
+      pace: null,
+    })
+  })
+
+  it('sépare la semaine en cours de la précédente', () => {
+    const stats = computeWeekStats(
+      [
+        run('2026-11-03T07:00:00Z', 5000, 1500), // mardi de cette semaine
+        run('2026-10-28T07:00:00Z', 8000, 2400), // mercredi précédent
+        run('2026-10-20T07:00:00Z', 10000, 3000), // il y a deux semaines
+      ],
+      NOW
+    )
+    expect(stats.current).toEqual({ count: 1, meters: 5000 })
+    expect(stats.previous).toEqual({ count: 1, meters: 8000 })
+  })
+
+  it('calcule une allure pondérée par la distance', () => {
+    // 5 km en 25 min + 10 km en 55 min = 15 km en 80 min → 5:20 /km
+    const stats = computeWeekStats(
+      [
+        run('2026-11-02T07:00:00Z', 5000, 1500),
+        run('2026-11-04T07:00:00Z', 10000, 3300),
+      ],
+      NOW
+    )
+    expect(stats.pace).toBe('5:20 /km')
+  })
+
+  it("ignore les séances sans distance pour l'allure", () => {
+    const stats = computeWeekStats(
+      [
+        run('2026-11-02T07:00:00Z', 5000, 1500),
+        run('2026-11-04T07:00:00Z', null, 3600),
+      ],
+      NOW
+    )
+    expect(stats.current.count).toBe(2)
+    expect(stats.pace).toBe('5:00 /km')
   })
 })

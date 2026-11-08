@@ -1,4 +1,5 @@
 import { TIME_ZONE } from './format'
+import { formatPace } from './pace'
 
 type StatInput = { startedAt: Date; distanceMeters: number | null }
 
@@ -23,11 +24,7 @@ const MS_PER_DAY = 86_400_000
  * Une course le lundi à 0 h 30 à Paris est le dimanche à 23 h 30 en UTC :
  * il faut raisonner en heure de Paris pour la ranger dans la bonne semaine.
  */
-/**
- * Jour calendaire d'une date, vu depuis Paris.
- * Une course le lundi à 0 h 30 à Paris est le dimanche à 23 h 30 en UTC :
- * il faut raisonner en heure de Paris pour la ranger dans la bonne semaine.
- */
+
 export function parisDay(date: Date) {
   const parts = dayFormatter.formatToParts(date)
   const get = (type: string) =>
@@ -74,4 +71,63 @@ export function computeDistanceStats(
   }
 
   return stats
+}
+
+type WeekInput = {
+  startedAt: Date
+  distanceMeters: number | null
+  durationSeconds: number
+}
+
+export type WeekTotals = { count: number; meters: number }
+
+export type WeekStats = {
+  current: WeekTotals
+  previous: WeekTotals
+  /** Allure moyenne de la semaine en cours, null sans distance */
+  pace: string | null
+}
+
+/**
+ * Nombre de séances et distance de la semaine en cours (du lundi) et de la
+ * semaine précédente, pour afficher l'évolution dans les vignettes.
+ */
+export function computeWeekStats(
+  items: WeekInput[],
+  now: Date = new Date()
+): WeekStats {
+  const today = parisDay(now)
+  const weekStart = today.dayNumber - today.weekdayFromMonday
+  const previousWeekStart = weekStart - 7
+
+  const current: WeekTotals = { count: 0, meters: 0 }
+  const previous: WeekTotals = { count: 0, meters: 0 }
+  // Seules les séances avec une distance comptent pour l'allure
+  let pacedMeters = 0
+  let pacedSeconds = 0
+
+  for (const item of items) {
+    const day = parisDay(item.startedAt).dayNumber
+    const meters = item.distanceMeters ?? 0
+
+    if (day >= weekStart && day <= today.dayNumber) {
+      current.count += 1
+      current.meters += meters
+      if (meters > 0) {
+        pacedMeters += meters
+        pacedSeconds += item.durationSeconds
+      }
+    } else if (day >= previousWeekStart && day < weekStart) {
+      previous.count += 1
+      previous.meters += meters
+    }
+  }
+
+  return {
+    current,
+    previous,
+    // Allure pondérée : temps total / distance totale, et non la moyenne
+    // des allures (une sortie de 20 km pèse plus qu'un footing de 5 km)
+    pace: formatPace(pacedMeters, pacedSeconds),
+  }
 }
