@@ -99,7 +99,10 @@ function TabButton({
 function WeeklyChart({ data }: { data: WeeklyDistance[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+      <LineChart
+        data={data}
+        margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} stroke={GRID_COLOR} />
         <XAxis
           dataKey="label"
@@ -119,7 +122,13 @@ function WeeklyChart({ data }: { data: WeeklyDistance[] }) {
           labelFormatter={(label) => `Semaine du ${label}`}
           formatter={(value) => [`${value} km`, 'Distance']}
         />
-        <Line type="monotone" dataKey="km" stroke={RUN_COLOR} strokeWidth={2} dot={{ r: 3 }} />
+        <Line
+          type="monotone"
+          dataKey="km"
+          stroke={RUN_COLOR}
+          strokeWidth={2}
+          dot={{ r: 3 }}
+        />
       </LineChart>
     </ResponsiveContainer>
   )
