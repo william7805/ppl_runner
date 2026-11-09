@@ -140,8 +140,7 @@ function PlaceLabel({ place, subtitle }: { place: Place; subtitle?: string }) {
   const base = `flex items-center gap-3 whitespace-nowrap rounded-full border-2 bg-slate-900/90 px-4 py-2 ${ACCENTS[place.id]}`
   const content = (
     <>
-      <span aria-hidden="true" className="text-xl">
-      </span>
+      <span aria-hidden="true" className="text-xl"></span>
       <span className="flex flex-col text-left leading-tight">
         <span className="font-semibold">{place.label}</span>
         <span className="text-xs opacity-80">
