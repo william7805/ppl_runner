@@ -1,5 +1,5 @@
 // Les lieux de l'île, source unique pour la carte 2D et la scène 3D.
-export type PlaceId = 'run' | 'swim' | 'strength' | 'health'
+export type PlaceId = 'run' | 'swim' | 'muscu' | 'health'
 
 export type Place = {
   id: PlaceId
@@ -41,7 +41,7 @@ export const PLACES: Place[] = [
     labelHeight: 2.4,
   },
   {
-    id: 'strength',
+    id: 'muscu',
     label: 'Espace musculation',
     icon: '🏋️',
     href: null,
