@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -29,8 +29,7 @@
     "react-dom": "19.3.0",
     "react-qr-code": "^2.2.0",
     "recharts": "^3.10.1",
-    "three": "^0.187.0",
-    "dev": "next dev -p 3001"
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
