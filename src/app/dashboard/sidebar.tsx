@@ -33,7 +33,7 @@ export function Sidebar({
                 aria-current={place.id === current ? 'page' : undefined}
                 className={`${itemBase} hover:bg-white/10 aria-[current=page]:bg-violet-600`}
               >
-                <span aria-hidden="true">{place.icon}</span>
+                
                 {place.label}
               </Link>
             ) : (
@@ -41,11 +41,9 @@ export function Sidebar({
                 aria-disabled="true"
                 className={`${itemBase} text-white/50`}
               >
-                <span aria-hidden="true">{place.icon}</span>
+                
                 {place.label}
-                <span className="rounded-full border border-dashed border-white/30 px-2 text-xs font-normal">
-                  Bientôt
-                </span>
+                
               </span>
             )}
           </li>
