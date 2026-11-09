@@ -4,7 +4,6 @@ export type PlaceId = 'run' | 'swim' | 'muscu' | 'health'
 export type Place = {
   id: PlaceId
   label: string
-  icon: string
   href: string | null // null : lieu pas encore disponible
   // Carte 2D : position en % de l'image public/island.webp
   left: number
@@ -19,7 +18,6 @@ export const PLACES: Place[] = [
   {
     id: 'run',
     label: "Piste d'athlétisme",
-    icon: '🏃',
     href: '/dashboard',
     left: 37,
     top: 27,
@@ -31,8 +29,7 @@ export const PLACES: Place[] = [
   {
     id: 'swim',
     label: 'Piscine',
-    icon: '🏊',
-    href: null,
+    href: '/swimming',
     left: 74,
     top: 37,
     model: '/models/swimming_pool.glb',
@@ -43,8 +40,7 @@ export const PLACES: Place[] = [
   {
     id: 'muscu',
     label: 'Espace musculation',
-    icon: '🏋️',
-    href: null,
+    href: '/muscu',
     left: 51,
     top: 51,
     model: '/models/gym_lowpoly.glb',
@@ -55,7 +51,6 @@ export const PLACES: Place[] = [
   {
     id: 'health',
     label: 'Maison santé',
-    icon: '❤️',
     href: null,
     left: 23.5,
     top: 52,
