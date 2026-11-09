@@ -10,6 +10,8 @@ import { requireSession } from '@/lib/session'
 import { isUuid } from '@/lib/uuid'
 import { deleteActivity } from './actions'
 import { DeleteActivityButton } from './delete-activity-button'
+import { RouteMap } from '@/components/route-map'
+import { trackToCoordinates } from '@/lib/gpx/track'
 
 type ActivityPageProps = {
   params: Promise<{ id: string }>
@@ -31,6 +33,7 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
 
   if (!activity) notFound()
 
+  const coordinates = trackToCoordinates(activity.track)
   const pace = activity.distanceMeters
     ? formatPace(activity.distanceMeters, activity.durationSeconds)
     : null
@@ -61,26 +64,50 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   ]
 
   return (
-    <main className="mx-auto mt-12 max-w-2xl p-6">
-      <Link href="/dashboard" className="mb-6 inline-block underline">
-        ← Retour au dashboard
-      </Link>
+    <div className="min-h-dvh bg-linear-to-b from-sky-950 to-slate-950 text-white">
+      <main className="mx-auto max-w-3xl p-6">
+        <Link
+          href="/dashboard"
+          className="mb-6 inline-block underline-offset-4 hover:underline"
+        >
+          ← Retour au dashboard
+        </Link>
 
-      <p className="text-sm opacity-70">{ACTIVITY_LABELS[activity.type]}</p>
-      <h1 className="mb-6 text-2xl font-bold">
-        {formatDateTime(activity.startedAt)}
-      </h1>
+        <p className="text-sm font-semibold text-violet-300">
+          {ACTIVITY_LABELS[activity.type]}
+        </p>
+        <h1 className="mb-6 text-2xl font-bold">
+          {formatDateTime(activity.startedAt)}
+        </h1>
 
-      <dl className="mb-10 grid grid-cols-2 gap-4">
-        {rows.map(([label, value]) => (
-          <div key={label} className="rounded border p-4">
-            <dt className="text-sm opacity-70">{label}</dt>
-            <dd className="text-xl font-bold">{value}</dd>
-          </div>
-        ))}
-      </dl>
+        <div className="mb-6">
+          {coordinates ? (
+            <RouteMap
+              coordinates={coordinates}
+              label={`Carte du parcours du ${formatDateTime(activity.startedAt)}`}
+            />
+          ) : (
+            <p className="rounded-xl border-2 border-dashed border-white/20 p-4 text-center text-sm text-white/50">
+              Pas de trace pour cette séance : elle est trop courte, ou a été
+              importée avant l&apos;ajout des cartes.
+            </p>
+          )}
+        </div>
 
-      <DeleteActivityButton action={deleteActivity.bind(null, activity.id)} />
-    </main>
+        <dl className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {rows.map(([label, value]) => (
+            <div
+              key={label}
+              className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 backdrop-blur"
+            >
+              <dt className="text-sm text-white/70">{label}</dt>
+              <dd className="text-xl font-bold">{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <DeleteActivityButton action={deleteActivity.bind(null, activity.id)} />
+      </main>
+    </div>
   )
 }

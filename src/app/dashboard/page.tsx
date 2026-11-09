@@ -6,7 +6,7 @@ import { formatDateTime, formatDistance, formatDuration } from '@/lib/format'
 import { formatPace } from '@/lib/pace'
 import { requireSession } from '@/lib/session'
 import { trackToCoordinates } from '@/lib/gpx/track'
-import { RouteMap } from './route-map'
+import { RouteMap } from '@/components/route-map'
 import {
   computeDistanceStats,
   computeRunSeries,
