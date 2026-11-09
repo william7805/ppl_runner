@@ -6,7 +6,7 @@ import { formatDateTime, formatDistance, formatDuration } from '@/lib/format'
 import { formatPace } from '@/lib/pace'
 import { requireSession } from '@/lib/session'
 import { trackToCoordinates } from '@/lib/gpx/track'
-import { RouteMap } from './route-map'
+import { RouteMap } from '@/components/route-map'
 import {
   computeDistanceStats,
   computeRunSeries,
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-violet-300">
-              <span aria-hidden="true">🏃</span> Piste d&apos;athlétisme
+              Piste d&apos;athlétisme
             </p>
             <h1 className="text-2xl font-bold">Course à pied</h1>
           </div>
