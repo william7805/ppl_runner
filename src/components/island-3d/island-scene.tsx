@@ -141,7 +141,6 @@ function PlaceLabel({ place, subtitle }: { place: Place; subtitle?: string }) {
   const content = (
     <>
       <span aria-hidden="true" className="text-xl">
-        {place.icon}
       </span>
       <span className="flex flex-col text-left leading-tight">
         <span className="font-semibold">{place.label}</span>
