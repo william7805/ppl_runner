@@ -29,7 +29,8 @@
     "react-dom": "19.3.0",
     "react-qr-code": "^2.2.0",
     "recharts": "^3.10.1",
-    "three": "^0.187.0"
+    "three": "^0.187.0",
+    "dev": "next dev -p 3001"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
