@@ -41,7 +41,7 @@ export const PLACES: Place[] = [
     labelHeight: 2.4,
   },
   {
-    id: 'strength',
+    id: 'muscu',
     label: 'Espace musculation',
     icon: '🏋️',
     href: null,
