@@ -56,7 +56,7 @@ const ISLAND_MODEL = '/models/ppl_runner_island_v3.glb'
 const ACCENTS: Record<PlaceId, string> = {
   run: 'border-violet-400',
   swim: 'border-sky-400',
-  strength: 'border-orange-400',
+  muscu: 'border-orange-400',
   health: 'border-emerald-400',
 }
 
