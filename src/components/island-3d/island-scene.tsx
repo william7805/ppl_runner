@@ -10,9 +10,17 @@ import {
   type RefObject,
 } from 'react'
 import Link from 'next/link'
-import { Vector3 } from 'three'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Clone, OrbitControls, useGLTF } from '@react-three/drei'
+import { useRouter } from 'next/navigation'
+import {
+  EquirectangularReflectionMapping,
+  SRGBColorSpace,
+  Vector3,
+  type Material,
+  type Mesh,
+  type Object3D,
+} from 'three'
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
+import { OrbitControls, useGLTF, useTexture } from '@react-three/drei'
 import {
   PLACES,
   type Place,
@@ -22,14 +30,16 @@ import {
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
-// Angle vertical de la caméra : 0 = vue du dessus, π/2 = au ras de l'eau
-const CAMERA_START_ANGLE = Math.PI / 3.25 // environ 55° au chargement
+// Angle vertical de la caméra : 0 = vue du dessus, π/2 = à l'horizontale
+const CAMERA_START_ANGLE = Math.PI / 3.1 // environ 58° au chargement
 const CAMERA_MIN_ANGLE = 0.01 // presque à la verticale de l'île
-const CAMERA_MAX_ANGLE = Math.PI / 2 - 0.08 // juste au-dessus de la mer
-const CAMERA_DISTANCE = 40
+const CAMERA_MAX_ANGLE = Math.PI / 2 + 0.35 // un peu sous l'île, pour voir le cône
+const CAMERA_DISTANCE = 58
+// Point que la caméra regarde : un peu sous le plateau, pour cadrer aussi le cône
+const CAMERA_TARGET: [number, number, number] = [0, -2, 0]
 // Limites du zoom à la molette (ou au pincement sur mobile)
-const MIN_ZOOM_DISTANCE = 18
-const MAX_ZOOM_DISTANCE = 60
+const MIN_ZOOM_DISTANCE = 28
+const MAX_ZOOM_DISTANCE = 95
 // Délai avant que la rotation automatique reprenne après un geste
 const RESUME_DELAY_MS = 2000
 // 2 = un tour en 30 s, 5 = un tour en 12 s
@@ -38,40 +48,47 @@ const AUTO_ROTATE_SPEED = 1.2
 const ROTATE_STEP = Math.PI / 8 // 22,5°
 const TILT_STEP = Math.PI / 12 // 15°
 const ZOOM_STEP = 1.2 // ×1,2 en dézoom, ÷1,2 en zoom
+// Au-delà de ce déplacement (en pixels) pendant un clic, c'était un glisser
+// pour tourner l'île et non un clic sur un lieu
+const CLICK_TOLERANCE_PX = 4
 
-// Les modèles sont exportés avec l'axe Z vers le haut, Three.js utilise
-// l'axe Y : on fait pivoter tout le monde d'un quart de tour autour de X
-const Z_UP_TO_Y_UP = -Math.PI / 2
-// Hauteur où l'on pose les bâtiments : juste au-dessus du plateau (1,2)
-// et des allées (1,25), pour éviter que deux surfaces se confondent
-const PLATEAU_HEIGHT = 1.27
-// Les bâtiments sont modélisés à une autre échelle que l'île
-const BUILDING_SCALE = 0.6
-// Niveau de la mer, juste sous la plage
-const SEA_LEVEL = -0.38
-const SKY_COLOR = '#7cc4f2'
-
-const ISLAND_MODEL = '/models/ppl_runner_island_v3.glb'
+// Île complète (relief, rivière, lieux, décor) en un seul modèle, axe Y vers
+// le haut, 1 unité = 1 m. Généré par scripts/island/island-builder.js
+const ISLAND_MODEL = '/models/ile-volante.glb'
+// Ciel : panorama équirectangulaire, sert aussi de lumière d'ambiance et de
+// reflet pour l'eau
+const SKY_TEXTURE = '/sky/sky_04_2k.png'
+const ENVIRONMENT_INTENSITY = 0.7
 
 const ACCENTS: Record<PlaceId, string> = {
   run: 'border-violet-400',
   swim: 'border-sky-400',
   muscu: 'border-orange-400',
   health: 'border-emerald-400',
+  quests: 'border-amber-300',
 }
 
 const CAMERA_POSITION: [number, number, number] = [
-  CAMERA_DISTANCE * Math.sin(CAMERA_START_ANGLE) * Math.SQRT1_2,
-  CAMERA_DISTANCE * Math.cos(CAMERA_START_ANGLE),
-  CAMERA_DISTANCE * Math.sin(CAMERA_START_ANGLE) * Math.SQRT1_2,
+  CAMERA_TARGET[0] +
+    CAMERA_DISTANCE * Math.sin(CAMERA_START_ANGLE) * Math.SQRT1_2,
+  CAMERA_TARGET[1] + CAMERA_DISTANCE * Math.cos(CAMERA_START_ANGLE),
+  CAMERA_TARGET[2] +
+    CAMERA_DISTANCE * Math.sin(CAMERA_START_ANGLE) * Math.SQRT1_2,
 ]
 
-// Point d'accroche de chaque étiquette dans la scène. Les lieux sont décrits
-// avec Z vers le haut ; après le quart de tour, (x, y, z) devient (x, z, -y)
-const LABEL_ANCHORS = PLACES.map((place) => {
-  const [x, y] = place.position3d
-  return new Vector3(x, PLATEAU_HEIGHT + place.labelHeight, -y)
-})
+// Point d'accroche de chaque étiquette dans la scène
+const LABEL_ANCHORS = PLACES.map((place) => new Vector3(...place.anchor))
+
+// Retrouve le lieu d'un objet cliqué en remontant ses parents jusqu'au groupe
+// du lieu (Track, Pool, Gym…)
+const PLACE_BY_NODE = new Map(PLACES.map((place) => [place.node, place]))
+function findPlace(object: Object3D | null): Place | undefined {
+  for (let o = object; o; o = o.parent) {
+    const place = PLACE_BY_NODE.get(o.name)
+    if (place) return place
+  }
+  return undefined
+}
 
 type LabelElements = Partial<Record<PlaceId, HTMLElement | null>>
 type Controls = ComponentRef<typeof OrbitControls>
@@ -91,21 +108,91 @@ function usePrefersReducedMotion(): boolean {
   )
 }
 
-function Island() {
-  const { scene } = useGLTF(ISLAND_MODEL)
-  return <Clone object={scene} castShadow receiveShadow />
+/** Le ciel en fond de scène, réutilisé comme éclairage d'ambiance et reflets */
+function Sky() {
+  // Réglages appliqués une seule fois, au chargement de l'image
+  const texture = useTexture(SKY_TEXTURE, (loaded) => {
+    loaded.mapping = EquirectangularReflectionMapping
+    loaded.colorSpace = SRGBColorSpace
+  })
+  const get = useThree((state) => state.get)
+
+  useEffect(() => {
+    const { scene } = get()
+    scene.background = texture
+    scene.environment = texture
+    scene.environmentIntensity = ENVIRONMENT_INTENSITY
+    return () => {
+      scene.background = null
+      scene.environment = null
+    }
+  }, [texture, get])
+
+  return null
 }
 
-function Building({ place }: { place: Place }) {
-  const { scene } = useGLTF(place.model)
-  const [x, y] = place.position3d
+type IslandProps = {
+  animate: boolean
+  onSelect: (href: string) => void
+}
+
+function Island({ animate, onSelect }: IslandProps) {
+  const { scene } = useGLTF(ISLAND_MODEL)
+  // Objets animés, retrouvés par leur nom dans le modèle
+  const animated = useRef<{
+    blades?: Object3D
+    balloon?: Object3D
+    balloonBaseY: number
+  }>({ balloonBaseY: 0 })
+
+  // Les ombres ne sont pas stockées dans le fichier glTF : on les active ici.
+  // L'eau, transparente, ne projette pas d'ombre
+  useEffect(() => {
+    scene.traverse((object) => {
+      const mesh = object as Mesh
+      if (!mesh.isMesh) return
+      mesh.receiveShadow = true
+      mesh.castShadow = !(mesh.material as Material).transparent
+    })
+    const balloon = scene.getObjectByName('Balloon')
+    animated.current = {
+      blades: scene.getObjectByName('Blades'),
+      balloon,
+      balloonBaseY: balloon?.position.y ?? 0,
+    }
+  }, [scene])
+
+  // Remet le curseur normal si on quitte la page en survolant un lieu
+  useEffect(() => () => void (document.body.style.cursor = 'auto'), [])
+
+  // Petites animations : pales du moulin et montgolfière qui flotte
+  useFrame((state, delta) => {
+    const { blades, balloon, balloonBaseY } = animated.current
+    if (!animate) return
+    blades?.rotateZ(delta * 0.8)
+    if (balloon)
+      balloon.position.y =
+        balloonBaseY + Math.sin(state.clock.getElapsedTime() * 0.5) * 0.6
+  })
+
   return (
-    <Clone
+    <primitive
       object={scene}
-      position={[x, y, PLATEAU_HEIGHT]}
-      scale={BUILDING_SCALE}
-      castShadow
-      receiveShadow
+      onClick={(event: ThreeEvent<MouseEvent>) => {
+        // Seul l'objet le plus proche de la caméra compte
+        event.stopPropagation()
+        if (event.delta > CLICK_TOLERANCE_PX) return
+        const place = findPlace(event.object)
+        if (place?.href) onSelect(place.href)
+      }}
+      onPointerMove={(event: ThreeEvent<PointerEvent>) => {
+        event.stopPropagation()
+        const place = findPlace(event.object)
+        document.body.style.cursor = place?.href ? 'pointer' : 'auto'
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto'
+      }}
     />
   )
 }
@@ -140,11 +227,10 @@ function PlaceLabel({ place, subtitle }: { place: Place; subtitle?: string }) {
   const base = `flex items-center gap-3 whitespace-nowrap rounded-full border-2 bg-slate-900/90 px-4 py-2 ${ACCENTS[place.id]}`
   const content = (
     <>
-      <span aria-hidden="true" className="text-xl"></span>
       <span className="flex flex-col text-left leading-tight">
         <span className="font-semibold">{place.label}</span>
         <span className="text-xs opacity-80">
-          {place.href ? subtitle : 'Bientôt'}
+          {place.href ? (subtitle ?? 'Aucune séance') : 'Bientôt'}
         </span>
       </span>
     </>
@@ -200,6 +286,7 @@ export default function IslandScene({
 }: {
   subtitles: PlaceSubtitles
 }) {
+  const router = useRouter()
   const reducedMotion = usePrefersReducedMotion()
   // Choix explicite de l'utilisateur ; null = on suit le réglage du système
   const [rotationChoice, setRotationChoice] = useState<boolean | null>(null)
@@ -262,45 +349,37 @@ export default function IslandScene({
         dpr={[1, 2]}
         camera={{ position: CAMERA_POSITION, fov: 45 }}
       >
-        <color attach="background" args={[SKY_COLOR]} />
-        {/* Brume : les objets lointains se fondent dans le ciel */}
-        <fog attach="fog" args={[SKY_COLOR, 70, 160]} />
-
-        {/* Lumières : une ambiante douce et un « soleil » qui projette des ombres */}
-        <ambientLight intensity={0.8} />
+        {/* Lumières : un ciel chaud et un soleil couchant qui projette des ombres */}
+        <hemisphereLight args={['#ffd2b0', '#5a4a78', 0.6]} />
         <directionalLight
-          position={[20, 35, 15]}
-          intensity={1.5}
+          position={[-14, 26, 46]}
+          color="#ffb070"
+          intensity={2.2}
           castShadow
           shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-22}
-          shadow-camera-right={22}
-          shadow-camera-top={22}
-          shadow-camera-bottom={-22}
-          shadow-camera-far={100}
-          shadow-bias={-0.0005}
+          shadow-camera-left={-34}
+          shadow-camera-right={34}
+          shadow-camera-top={34}
+          shadow-camera-bottom={-34}
+          shadow-camera-far={140}
+          shadow-bias={-0.0008}
+          shadow-normalBias={0.06}
         />
 
-        {/* La mer */}
-        <mesh rotation-x={-Math.PI / 2} position={[0, SEA_LEVEL, 0]}>
-          <circleGeometry args={[200, 64]} />
-          <meshStandardMaterial color="#2f8fd8" transparent opacity={0.92} />
-        </mesh>
-
         <Suspense fallback={null}>
-          <group rotation-x={Z_UP_TO_Y_UP}>
-            <Island />
-            {PLACES.map((place) => (
-              <Building key={place.id} place={place} />
-            ))}
-          </group>
+          <Sky />
+          <Island
+            animate={!reducedMotion}
+            onSelect={(href) => router.push(href)}
+          />
         </Suspense>
 
         <LabelTracker labels={labels} />
 
         <OrbitControls
           ref={controls}
-          // Rotation dans les deux sens et zoom : de la vue au ras de l'eau
+          target={CAMERA_TARGET}
+          // Rotation dans les deux sens et zoom : de la vue sous l'île
           // jusqu'à la vue du dessus, sans déplacement latéral
           minPolarAngle={CAMERA_MIN_ANGLE}
           maxPolarAngle={CAMERA_MAX_ANGLE}
@@ -334,7 +413,7 @@ export default function IslandScene({
             className="pointer-events-auto absolute left-0 top-0"
             style={{ visibility: 'hidden' }}
           >
-            <PlaceLabel place={place} subtitle={subtitles[place.id]} />{' '}
+            <PlaceLabel place={place} subtitle={subtitles[place.id]} />
           </div>
         ))}
       </div>
@@ -394,6 +473,6 @@ export default function IslandScene({
   )
 }
 
-// Lance le téléchargement des modèles dès que ce fichier est chargé
+// Lance le téléchargement du modèle et du ciel dès que ce fichier est chargé
 useGLTF.preload(ISLAND_MODEL)
-PLACES.forEach((place) => useGLTF.preload(place.model))
+useTexture.preload(SKY_TEXTURE)
