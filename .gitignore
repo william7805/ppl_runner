@@ -52,3 +52,6 @@ data/*
 .vercel
 .env*
 !.env.example
+
+# Worker MapLibre copié depuis node_modules avant dev et build
+/public/maplibre/

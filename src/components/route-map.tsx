@@ -9,7 +9,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl'
 const MAP_STYLE_URL =
   'https://tiles-eu.stadiamaps.com/styles/stamen_toner_dark.json'
 const TRACK_COLOR = '#a78bfa' // violet-400, la couleur de la course
-
+const MAPLIBRE_WORKER_URL = '/maplibre/maplibre-gl-worker.mjs'
 type Props = {
   /** Points de la trace au format [longitude, latitude] */
   coordinates: [number, number][]
@@ -34,7 +34,8 @@ export function RouteMap({ coordinates, label }: Props) {
       // Selon le bundler, la librairie arrive directement ou sous `default`
       const maplibre =
         (module as unknown as { default?: typeof module }).default ?? module
-
+      // Worker servi depuis public/ (copié par scripts/copy-maplibre-worker.mjs)
+      maplibre.setWorkerUrl(MAPLIBRE_WORKER_URL)
       // Cadre qui englobe toute la trace
       const bounds = new maplibre.LngLatBounds(coordinates[0], coordinates[0])
       for (const point of coordinates) bounds.extend(point)
